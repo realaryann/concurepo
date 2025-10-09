@@ -5,5 +5,5 @@ import (
 )
 
 func Version() {
-	fmt.Printf("concurjob v%d.%d.%d\n", 0,0,1)
+	fmt.Printf("concurjob v%d.%d.%d\n", 0,0,2)
 }

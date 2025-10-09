@@ -1,8 +1,8 @@
 package main
 
 import (
-	//"fmt"
-	"flag"
+	"fmt"
+	"concurjob/parse_args"
 	"concurjob/version"
 )
 
@@ -13,12 +13,11 @@ func main() {
 	-o file.txt: Output the links to the repositories 
 	-version: Output the version of concurjob
 	*/
-	ver := flag.Bool("version", false, "Current version number")
-
-	flag.Parse()
+	ver, ofile, spawn := parse_args.Parse_args()
 
 	if *ver {
 		version.Version()
 	}
+	fmt.Println(*ofile, *spawn)
 
 }
