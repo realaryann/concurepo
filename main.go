@@ -4,37 +4,39 @@ import (
 	"fmt"
 	"net/http"
 	"log"
-	"time"
+	"sync"
 	"io/ioutil"
 	"concurjob/parse_args"
 	"concurjob/version"
 )
 
-func scrape() {
-	url := "https://realaryann.github.io/"
-	
+func scrape(websites []string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	// Http Get request to get the data from webpage and err code 
-	data, err := http.Get(url)
+	for _,v := range(websites) {
+		data, err := http.Get(v)
 
-	if err != nil {
-		log.Fatal(err)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// If the status code is not HTTP 200..
+		if data.StatusCode != http.StatusOK {
+			log.Fatalf("Received a non-200 HTTP GET code: %d", data)
+		}
+
+		// Actually read the data from the response
+
+		body, err := ioutil.ReadAll(data.Body)
+
+		data.Body.Close()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(string(body))
 	}
-
-	// If the status code is not HTTP 200..
-	if data.StatusCode != http.StatusOK {
-		log.Fatalf("Received a non-200 HTTP GET code: %d", data)
-	}
-
-	// Must close the data's body after computing
-	defer data.Body.Close()
-
-	// Actually read the data from the response
-	body, err := ioutil.ReadAll(data.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(string(body))
 }
 
 func main() {
@@ -50,10 +52,16 @@ func main() {
 		version.Version()
 	}
 
+	websites := []string{"https://github.com/trending"}
+
+	var wg sync.WaitGroup
+
 	for i := uint(0); i<*spawn; i++ {
-		go scrape()
-		time.Sleep(100 * time.Millisecond)
+		wg.Add(1)
+		go scrape(websites, &wg)
 	}
+
+	wg.Wait()
 
 	fmt.Println(*ofile, *spawn)
 
