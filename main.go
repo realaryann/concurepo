@@ -8,35 +8,36 @@ import (
 	"io/ioutil"
 	"concurjob/parse_args"
 	"concurjob/version"
+	"strings"
 )
 
-func scrape(websites []string, wg *sync.WaitGroup) {
+func scrape(website string, id uint, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// Http Get request to get the data from webpage and err code 
-	for _,v := range(websites) {
-		data, err := http.Get(v)
+	data, err := http.Get(website)
 
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// If the status code is not HTTP 200..
-		if data.StatusCode != http.StatusOK {
-			log.Fatalf("Received a non-200 HTTP GET code: %d", data)
-		}
-
-		// Actually read the data from the response
-
-		body, err := ioutil.ReadAll(data.Body)
-
-		data.Body.Close()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println(string(body))
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	// If the status code is not HTTP 200..
+	if data.StatusCode != http.StatusOK {
+		log.Fatalf("Received a non-200 HTTP GET code: %d", data)
+	}
+
+	// Actually read the data from the response
+
+	body, err := ioutil.ReadAll(data.Body)
+	
+	_ = body
+
+	data.Body.Close()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("id = ", id, "\n")
 }
 
 func main() {
@@ -46,11 +47,13 @@ func main() {
 	-o file.txt: Output the links to the repositories 
 	-version: Output the version of concurjob
 	*/
-	ver, ofile, spawn := parse_args.Parse_args()
+	ver, ofile, spawn, flags := parse_args.Parse_args()
 
 	if *ver {
 		version.Version()
 	}
+
+	flag_s := strings.Split(*flags, " ")
 
 	websites := []string{"https://github.com/trending"}
 
@@ -58,11 +61,11 @@ func main() {
 
 	for i := uint(0); i<*spawn; i++ {
 		wg.Add(1)
-		go scrape(websites, &wg)
+		go scrape(websites[0], i, &wg)
 	}
 
 	wg.Wait()
-
+	fmt.Println(flag_s)
 	fmt.Println(*ofile, *spawn)
 
 }
