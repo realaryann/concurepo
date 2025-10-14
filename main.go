@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"log"
 	"sync"
-	"concurjob/parse_args"
-	"concurjob/version"
+	"os"
+	"concurepo/parse_args"
+	"concurepo/version"
 	"github.com/PuerkitoBio/goquery"
 	"strings"
 )
@@ -58,11 +59,13 @@ func main() {
 	-spawn x: Spawn x goroutines to search for repositories to contribute to
 	-o file.txt: Output the links to the repositories 
 	-version: Output the version of concurjob
+	-flag: Flags to filter the scraped output
 	*/
 	ver, ofile, spawn, flags := parse_args.Parse_args()
 
 	if *ver {
 		version.Version()
+		os.Exit(0)
 	}
 
 	flag_s := strings.Split(*flags, " ")
