@@ -54,26 +54,40 @@ func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
 }
 
 func main() {
-	/*
-	CLI Args
-	-spawn x: Spawn x goroutines to search for repositories to contribute to
-	-o file.txt: Output the links to the repositories 
-	-version: Output the version of concurjob
-	-flag: Flags to filter the scraped output
-	*/
 	ver, ofile, spawn, flags := parse_args.Parse_args()
 
+	// Print concurepo version
 	if *ver {
 		version.Version()
 		os.Exit(0)
 	}
+	
+	// Redirect output to a specifed output file
+	if *ofile != "" {
+		
+		f, err := os.Create(*ofile)
+		orig_stdout := os.Stdout
 
-	flag_s := strings.Split(*flags, " ")
+		if err != nil {
+			log.Fatalf("Unable to create output file")
+		}
 
-	_ =*ofile
+		// Defer the closing of the file
+		defer func() {
+			os.Stdout = orig_stdout
+			f.Close()
+		}()
 
+		os.Stdout = f
+	}
+
+	// Filter flags to apply to scraped HTML
+	flag_s := strings.Split(*flags, ",")
+
+	// Websites to scrape repositories from
 	websites := []string{"https://github.com/trending"}
 
+	// Waitgroup to wait for all scraping goroutines
 	var wg sync.WaitGroup
 
 	for i := uint(0); i<*spawn; i++ {
