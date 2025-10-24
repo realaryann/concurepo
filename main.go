@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"log"
 	"sync"
+	"regexp"
 	"os"
 	"concurepo/parse_args"
 	"concurepo/version"
@@ -16,7 +17,9 @@ func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
 	defer wg.Done()
 	// Http Get request to get the data from webpage and err code 
 	data, err := http.Get(website)
-
+	re_repo := regexp.MustCompile(`^\/[^\/]+\/[^\/]+\/[^\/]+$`)
+	re_user := regexp.MustCompile(`^\/[^\/]+$`)
+	re_gh := regexp.MustCompile(`^\/[^\/]+\/[^\/]+$`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +47,13 @@ func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
 			if strings.Contains(text, v) {
 				link, exists := element.Attr("href")
 				if exists {
-					fmt.Printf("ID=[ %d ] Text=[ %s ] Link=[ %s ]\n", id, text, link)
+					if re_repo.MatchString(link) || re_user.MatchString(link) || re_gh.MatchString(link) {
+						link = "https://github.com"+link
+						fmt.Printf("ID=[ %d ] Text=[ %s ] Link=[ %s ]\n", id, text, link)
+	
+					} else {
+						fmt.Printf("ID=[ %d ] Text=[ %s ] Link=[ %s ]\n", id, text, link)
+					}
 				}
 				break
 			}
