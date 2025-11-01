@@ -5,11 +5,13 @@ import (
 	"net/http"
 	"log"
 	"sync"
+	"context"
 	"regexp"
 	"os"
 	"concurepo/parse_args"
 	"concurepo/version"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/google/go-github/v76/github"
 	"strings"
 )
 
@@ -42,7 +44,6 @@ func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
 
 		text := element.Text()
 		text = strings.TrimSpace(text)
-
 		for _,v := range(flags) {
 			if strings.Contains(text, v) {
 				link, exists := element.Attr("href")
@@ -62,8 +63,32 @@ func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
 
 }
 
+func github_go_api() {
+
+	ctx := context.Background()
+	client := github.NewClient(nil)
+
+	opt := &github.SearchOptions{
+		Sort:        "stars",
+		Order:       "desc",
+		ListOptions: github.ListOptions{PerPage: 10},
+	}
+
+	query := "C++ in:name,description"
+	results, _, err := client.Search.Repositories(ctx, query, opt)
+
+	if err != nil {
+		log.Fatalf("Ran into error while using github-go search")
+	}
+      
+	for _, repo := range results.Repositories {
+		fmt.Printf("%s\n", repo.GetHTMLURL()) 
+	}
+
+}
+
 func main() {
-	ver, ofile, spawn, flags := parse_args.Parse_args()
+	ver, ofile, spawn, flags  := parse_args.Parse_args()
 
 	// Print concurepo version
 	if *ver {
