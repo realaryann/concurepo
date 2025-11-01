@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
+func scrape(website string, wg *sync.WaitGroup, flags []string) {
 	defer wg.Done()
 	// Http Get request to get the data from webpage and err code 
 	data, err := http.Get(website)
@@ -50,10 +50,10 @@ func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
 				if exists {
 					if re_repo.MatchString(link) || re_user.MatchString(link) || re_gh.MatchString(link) {
 						link = "https://github.com"+link
-						fmt.Printf("ID=[ %d ] Text=[ %s ] Link=[ %s ]\n", id, text, link)
+						fmt.Printf("Text=[ %s ] Link=[ %s ]\n", text, link)
 	
 					} else {
-						fmt.Printf("ID=[ %d ] Text=[ %s ] Link=[ %s ]\n", id, text, link)
+						fmt.Printf("Text=[ %s ] Link=[ %s ]\n", text, link)
 					}
 				}
 				break
@@ -63,7 +63,13 @@ func scrape(website string, id uint, wg *sync.WaitGroup, flags []string) {
 
 }
 
-func github_go_api() {
+func github_go_api(flags []string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	var q string
+	for i := 0; i<len(flags)-1; i++ {
+		q += flags[i] + " OR"
+	}
+	q = q + " " + flags[len(flags)-1]
 
 	ctx := context.Background()
 	client := github.NewClient(nil)
@@ -74,7 +80,8 @@ func github_go_api() {
 		ListOptions: github.ListOptions{PerPage: 10},
 	}
 
-	query := "C++ in:name,description"
+	query := q + " in:name,description"
+	fmt.Println(query)
 	results, _, err := client.Search.Repositories(ctx, query, opt)
 
 	if err != nil {
@@ -89,7 +96,7 @@ func github_go_api() {
 
 func main() {
 	ver, ofile, spawn, flags  := parse_args.Parse_args()
-
+	_ = spawn 
 	// Print concurepo version
 	if *ver {
 		version.Version()
@@ -117,17 +124,17 @@ func main() {
 
 	// Filter flags to apply to scraped HTML
 	flag_s := strings.Split(*flags, ",")
-
 	// Websites to scrape repositories from
 	websites := []string{"https://github.com/trending"}
 
 	// Waitgroup to wait for all scraping goroutines
 	var wg sync.WaitGroup
 
-	for i := uint(0); i<*spawn; i++ {
-		wg.Add(1)
-		go scrape(websites[0], i, &wg, flag_s)
-	}
+	wg.Add(1)
+	go scrape(websites[0], &wg, flag_s)
+
+	wg.Add(1)
+	go github_go_api(flag_s, &wg)
 
 	wg.Wait()
 
