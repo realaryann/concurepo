@@ -50,10 +50,10 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 				if exists {
 					if re_repo.MatchString(link) || re_user.MatchString(link) || re_gh.MatchString(link) {
 						link = "https://github.com"+link
-						fmt.Printf("Text=[ %s ] Link=[ %s ]\n", text, link)
+						fmt.Printf("[ %-32s ] Link=[ %s ]\n", text, link)
 	
 					} else {
-						fmt.Printf("Text=[ %s ] Link=[ %s ]\n", text, link)
+						fmt.Printf("[ %-32s ] Link=[ %s ]\n", text, link)
 					}
 				}
 				break
@@ -81,7 +81,6 @@ func github_go_api(flags []string, wg *sync.WaitGroup) {
 	}
 
 	query := q + " in:name,description"
-	fmt.Println(query)
 	results, _, err := client.Search.Repositories(ctx, query, opt)
 
 	if err != nil {
@@ -89,7 +88,7 @@ func github_go_api(flags []string, wg *sync.WaitGroup) {
 	}
       
 	for _, repo := range results.Repositories {
-		fmt.Printf("%s\n", repo.GetHTMLURL()) 
+		fmt.Printf("[ %-32s ] Link=[ %s ]\n", repo.GetFullName(), repo.GetHTMLURL()) 
 	}
 
 }
@@ -126,15 +125,16 @@ func main() {
 	flag_s := strings.Split(*flags, ",")
 	// Websites to scrape repositories from
 	websites := []string{"https://github.com/trending"}
-
 	// Waitgroup to wait for all scraping goroutines
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go scrape(websites[0], &wg, flag_s)
 
-	wg.Add(1)
-	go github_go_api(flag_s, &wg)
+	if flag_s[0] != "" {
+		wg.Add(1)
+		go github_go_api(flag_s, &wg)
+	}
 
 	wg.Wait()
 
