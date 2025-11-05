@@ -19,9 +19,8 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 	defer wg.Done()
 	// Http Get request to get the data from webpage and err code 
 	data, err := http.Get(website)
-	re_repo := regexp.MustCompile(`^\/[^\/]+\/[^\/]+\/[^\/]+$`)
-	re_user := regexp.MustCompile(`^\/[^\/]+$`)
-	re_gh := regexp.MustCompile(`^\/[^\/]+\/[^\/]+$`)
+	re_simplify := regexp.MustCompile(`https://simplify\.jobs`)
+	re_http := regexp.MustCompile(`^https`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,20 +43,9 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 
 		text := element.Text()
 		text = strings.TrimSpace(text)
-		for _,v := range(flags) {
-			if strings.Contains(text, v) {
-				link, exists := element.Attr("href")
-				if exists {
-					if re_repo.MatchString(link) || re_user.MatchString(link) || re_gh.MatchString(link) {
-						link = "https://github.com"+link
-						fmt.Printf("[ %-32s ] Link=[ %s ]\n", text, link)
-	
-					} else {
-						fmt.Printf("[ %-32s ] Link=[ %s ]\n", text, link)
-					}
-				}
-				break
-			}
+		link, exists := element.Attr("href")
+		if exists && !re_simplify.MatchString(link) && re_http.MatchString(link) {
+			fmt.Println(link)
 		}
 	})
 
@@ -124,17 +112,18 @@ func main() {
 	// Filter flags to apply to scraped HTML
 	flag_s := strings.Split(*flags, ",")
 	// Websites to scrape repositories from
-	websites := []string{"https://github.com/trending"}
+	websites := []string{"https://github.com/SimplifyJobs/Summer2026-Internships"}
 	// Waitgroup to wait for all scraping goroutines
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go scrape(websites[0], &wg, flag_s)
 
+	/*
 	if flag_s[0] != "" {
 		wg.Add(1)
 		go github_go_api(flag_s, &wg)
-	}
+	}*/
 
 	wg.Wait()
 
