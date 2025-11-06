@@ -47,7 +47,11 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 			// j == 3 -> Application button ( Look for a tags)
 			// j == 4 -> date posted
 			if j == 1 {
-				rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
+				for _, v := range(flags) {
+					if strings.Contains(strings.ToLower(td.Text()), v) {
+						rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
+					}
+				}
 			}
 			if j == 3 {
 				td.Find("a").Each(func(k int, a *goquery.Selection) {
@@ -126,7 +130,12 @@ func main() {
 
 	// Filter flags to apply to scraped HTML
 	flag_s := strings.Split(*flags, ",")
-	// Websites to scrape repositories from
+
+	for i,v := range(flag_s) {
+		flag_s[i] = strings.ToLower(v)
+	}
+
+	// Websites to scrape jobs from
 	websites := []string{"https://github.com/SimplifyJobs/Summer2026-Internships", "https://github.com/SimplifyJobs/New-Grad-Positions"}
 	// Waitgroup to wait for all scraping goroutines
 	var wg sync.WaitGroup
