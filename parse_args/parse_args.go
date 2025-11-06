@@ -4,14 +4,16 @@ import (
 	"flag"
 )
 
-func Parse_args() (*bool, *string, *uint, *string) {
+func Parse_args() (*bool, *bool, *bool, *string, *uint, *string) {
 	ver := flag.Bool("version", false, "Current version number")
+	intern := flag.Bool("intern", false, "Look for internship positions")
+	fulltime := flag.Bool("fulltime", false, "Look for full time positions")
 	ofile := flag.String("o", "", "Post scraping output file")
 	spawn := flag.Uint("spawn", 1, "Number of concurrent goroutines to scrape, positive integer")
 	flags := flag.String("flag", "", "Comma separated flags to filter the results by")
 	
 	flag.Parse()
 
-	return ver, ofile, spawn, flags
+	return ver, intern, fulltime, ofile, spawn, flags
 }
 

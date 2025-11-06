@@ -8,8 +8,8 @@ import (
 	"context"
 	"regexp"
 	"os"
-	"concurepo/parse_args"
-	"concurepo/version"
+	"concurjob/parse_args"
+	"concurjob/version"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/google/go-github/v76/github"
 	"strings"
@@ -38,14 +38,29 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 
 	data.Body.Close()
 
-	link_select := doc.Find("a")
-	link_select.Each(func(i int, element *goquery.Selection) {
-
-		text := element.Text()
-		text = strings.TrimSpace(text)
-		link, exists := element.Attr("href")
-		if exists && !re_simplify.MatchString(link) && re_http.MatchString(link) {
-			fmt.Println(link)
+	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
+		var rowdata string
+		tr.Find("td").Each(func(j int, td *goquery.Selection) {
+			// j == 0 -> company name
+			// j == 1 -> role name
+			// j == 2 -> Location
+			// j == 3 -> Application button ( Look for a tags)
+			// j == 4 -> date posted
+			if j == 1 {
+				rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
+			}
+			if j == 3 {
+				td.Find("a").Each(func(k int, a *goquery.Selection) {
+					link, exists := a.Attr("href")
+					if exists && !re_simplify.MatchString(link) && re_http.MatchString(link) {
+						rowdata = rowdata + "Link: " + link + " | "
+					} 
+				})
+			}
+		})
+		if strings.Count(rowdata,"|") == 2  {
+			fmt.Printf("%s\n\n", rowdata)
+			fmt.Printf("\n------------------------------------------------------------------------------------------------------------------\n")
 		}
 	})
 
@@ -82,7 +97,7 @@ func github_go_api(flags []string, wg *sync.WaitGroup) {
 }
 
 func main() {
-	ver, ofile, spawn, flags  := parse_args.Parse_args()
+	ver, intern, fulltime, ofile, spawn, flags  := parse_args.Parse_args()
 	_ = spawn 
 	// Print concurepo version
 	if *ver {
@@ -112,18 +127,22 @@ func main() {
 	// Filter flags to apply to scraped HTML
 	flag_s := strings.Split(*flags, ",")
 	// Websites to scrape repositories from
-	websites := []string{"https://github.com/SimplifyJobs/Summer2026-Internships"}
+	websites := []string{"https://github.com/SimplifyJobs/Summer2026-Internships", "https://github.com/SimplifyJobs/New-Grad-Positions"}
 	// Waitgroup to wait for all scraping goroutines
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go scrape(websites[0], &wg, flag_s)
-
-	/*
-	if flag_s[0] != "" {
+	if *intern {
 		wg.Add(1)
-		go github_go_api(flag_s, &wg)
-	}*/
+		go scrape(websites[0], &wg, flag_s)
+	} else if *fulltime {
+		wg.Add(1)
+		go scrape(websites[1], &wg, flag_s)
+	} else {
+		wg.Add(1)
+		go scrape(websites[0], &wg, flag_s)
+		wg.Add(1)
+		go scrape(websites[1], &wg, flag_s)
+	}
 
 	wg.Wait()
 
