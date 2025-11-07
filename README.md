@@ -17,10 +17,11 @@ Made faster using goroutines and concurrency
 
 | Options | Type     | Description                |
 | :-------- | :------- | :------------------------- |
-| `-v` | `bool` | Current concurjob version |
+| `-version` | `bool` | Current concurjob version |
 | `-help` | `bool` | Information about cli options |
 | `-intern` | `bool` | Filter for intern positions |
 | `-fulltime` | `bool` | Filter for fulltime positions |
 | `-flag` | `string` | Comma separated keywords to filter positions |
+| `-limit` | `uint` | Limit job results using an unsigned int |
 
 
