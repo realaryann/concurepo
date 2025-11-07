@@ -55,18 +55,8 @@ func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string) {
 			// j == 3 -> Application button ( Look for a tags)
 			// j == 4 -> date posted
 			if j == 1 {
-<<<<<<< HEAD
-				for _, v := range(flags) {
-					if strings.Contains(strings.ToLower(td.Text()), v) {
-						rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
-					}
-				}
-			}
-			if j == 3 {
-=======
 				rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
 			} else if j == 3 {
->>>>>>> 342b0a6 (v0.3.1: Added -limit flag of type uint to limit outputed jobs)
 				td.Find("a").Each(func(k int, a *goquery.Selection) {
 					link, exists := a.Attr("href")
 					if exists && !re_simplify.MatchString(link) && re_http.MatchString(link) {
