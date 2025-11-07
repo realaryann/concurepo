@@ -9,11 +9,11 @@ func Parse_args() (*bool, *bool, *bool, *string, *uint, *string) {
 	intern := flag.Bool("intern", false, "Look for internship positions")
 	fulltime := flag.Bool("fulltime", false, "Look for full time positions")
 	ofile := flag.String("o", "", "Post scraping output file")
-	spawn := flag.Uint("spawn", 1, "Number of concurrent goroutines to scrape, positive integer")
+	limit := flag.Uint("limit", 15, "Number of positions to scrape. Default = 15")
 	flags := flag.String("flag", "", "Comma separated flags to filter the results by")
 	
 	flag.Parse()
 
-	return ver, intern, fulltime, ofile, spawn, flags
+	return ver, intern, fulltime, ofile,  limit, flags
 }
 

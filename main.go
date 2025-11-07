@@ -15,7 +15,14 @@ import (
 	"strings"
 )
 
-func scrape(website string, wg *sync.WaitGroup, flags []string) {
+func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string) {
+	/*
+	Scrape all the HTML data from a website, filter it, and print the desired output.
+	website: target website
+	wg: waitgroup
+	limit: number of positions to print
+	flags: desired flags to filter positions by
+	*/
 	defer wg.Done()
 	// Http Get request to get the data from webpage and err code 
 	data, err := http.Get(website)
@@ -38,6 +45,7 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 
 	data.Body.Close()
 
+	var rows uint = 1
 	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
 		var rowdata string
 		tr.Find("td").Each(func(j int, td *goquery.Selection) {
@@ -47,6 +55,7 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 			// j == 3 -> Application button ( Look for a tags)
 			// j == 4 -> date posted
 			if j == 1 {
+<<<<<<< HEAD
 				for _, v := range(flags) {
 					if strings.Contains(strings.ToLower(td.Text()), v) {
 						rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
@@ -54,6 +63,10 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 				}
 			}
 			if j == 3 {
+=======
+				rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
+			} else if j == 3 {
+>>>>>>> 342b0a6 (v0.3.1: Added -limit flag of type uint to limit outputed jobs)
 				td.Find("a").Each(func(k int, a *goquery.Selection) {
 					link, exists := a.Attr("href")
 					if exists && !re_simplify.MatchString(link) && re_http.MatchString(link) {
@@ -62,9 +75,11 @@ func scrape(website string, wg *sync.WaitGroup, flags []string) {
 				})
 			}
 		})
-		if strings.Count(rowdata,"|") == 2  {
-			fmt.Printf("%s\n\n", rowdata)
-			fmt.Printf("\n------------------------------------------------------------------------------------------------------------------\n")
+		if strings.Count(rowdata,"|") == 2 && (rows <= limit) {
+			fmt.Printf("%d: %s\n\n\n", rows, rowdata)
+			rows++
+		} else {
+			return
 		}
 	})
 
@@ -101,8 +116,7 @@ func github_go_api(flags []string, wg *sync.WaitGroup) {
 }
 
 func main() {
-	ver, intern, fulltime, ofile, spawn, flags  := parse_args.Parse_args()
-	_ = spawn 
+	ver, intern, fulltime, ofile, limit, flags  := parse_args.Parse_args()
 	// Print concurepo version
 	if *ver {
 		version.Version()
@@ -142,15 +156,15 @@ func main() {
 
 	if *intern {
 		wg.Add(1)
-		go scrape(websites[0], &wg, flag_s)
+		go scrape(websites[0], &wg, *limit, flag_s)
 	} else if *fulltime {
 		wg.Add(1)
-		go scrape(websites[1], &wg, flag_s)
+		go scrape(websites[1], &wg, *limit, flag_s)
 	} else {
 		wg.Add(1)
-		go scrape(websites[0], &wg, flag_s)
+		go scrape(websites[0], &wg, *limit, flag_s)
 		wg.Add(1)
-		go scrape(websites[1], &wg, flag_s)
+		go scrape(websites[1], &wg, *limit, flag_s)
 	}
 
 	wg.Wait()
