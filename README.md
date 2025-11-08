@@ -23,5 +23,6 @@ Made faster using goroutines and concurrency
 | `-fulltime` | `bool` | Filter for fulltime positions |
 | `-flag` | `string` | Comma separated keywords to filter positions |
 | `-limit` | `uint` | Limit job results using an unsigned int |
+| `-company` | `string` | Filter jobs by their company name |
 
 
