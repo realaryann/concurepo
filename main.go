@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string) {
+func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string, company []string) {
 	/*
 	Scrape all the HTML data from a website, filter it, and print the desired output.
 	website: target website
@@ -54,6 +54,13 @@ func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string) {
 			// j == 2 -> Location
 			// j == 3 -> Application button ( Look for a tags)
 			// j == 4 -> date posted
+			if j == 0 {
+				for _,v := range(company) {
+					if strings.Contains(strings.ToLower(td.Text()), v) {
+						rowdata = rowdata + strings.TrimSpace(td.Text()) + " | "
+					}
+				}
+			}
 			if j == 1 {
 				rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
 			} else if j == 3 {
@@ -65,7 +72,7 @@ func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string) {
 				})
 			}
 		})
-		if strings.Count(rowdata,"|") == 2 && (rows <= limit) {
+		if strings.Count(rowdata,"|") == 3 && (rows <= limit) {
 			fmt.Printf("%d: %s\n\n\n", rows, rowdata)
 			rows++
 		} else {
@@ -106,9 +113,10 @@ func github_go_api(flags []string, wg *sync.WaitGroup) {
 }
 
 func main() {
-	ver, intern, fulltime, ofile, limit, flags  := parse_args.Parse_args()
+	ver, intern, fulltime, company, ofile, limit, flags  := parse_args.Parse_args()
 	// Print concurepo version
 	if *ver {
+		
 		version.Version()
 		os.Exit(0)
 	}
@@ -134,9 +142,13 @@ func main() {
 
 	// Filter flags to apply to scraped HTML
 	flag_s := strings.Split(*flags, ",")
+	company_s := strings.Split(*company, ",")
 
 	for i,v := range(flag_s) {
 		flag_s[i] = strings.ToLower(v)
+	}
+	for i,v := range(company_s) {
+		company_s[i] = strings.ToLower(v)
 	}
 
 	// Websites to scrape jobs from
@@ -146,15 +158,15 @@ func main() {
 
 	if *intern {
 		wg.Add(1)
-		go scrape(websites[0], &wg, *limit, flag_s)
+		go scrape(websites[0], &wg, *limit, flag_s, company_s)
 	} else if *fulltime {
 		wg.Add(1)
-		go scrape(websites[1], &wg, *limit, flag_s)
+		go scrape(websites[1], &wg, *limit, flag_s, company_s)
 	} else {
 		wg.Add(1)
-		go scrape(websites[0], &wg, *limit, flag_s)
+		go scrape(websites[0], &wg, *limit, flag_s, company_s)
 		wg.Add(1)
-		go scrape(websites[1], &wg, *limit, flag_s)
+		go scrape(websites[1], &wg, *limit, flag_s, company_s)
 	}
 
 	wg.Wait()
