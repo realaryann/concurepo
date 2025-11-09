@@ -25,4 +25,10 @@ Made faster using goroutines and concurrency
 | `-limit` | `uint` | Limit job results using an unsigned int |
 | `-company` | `string` | Filter jobs by their company name |
 
+## TODOs
 
+[] Additional filtering based on job description
+[] Adding more sources of scraping - Both FT and Intern
+[] Expanding beyond SWE and tech positions
+[] Distributing and organizing main.go
+[] Utilizing hashing O(1) lookup instead of slice iteration for -flags
