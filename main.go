@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string, company []string) {
+func scrape(website string, wg *sync.WaitGroup, limit uint, flag_set, company_set map[string]struct{}) {
 	/*
 	Scrape all the HTML data from a website, filter it, and print the desired output.
 	website: target website
@@ -23,11 +23,15 @@ func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string, comp
 	limit: number of positions to print
 	flags: desired flags to filter positions by
 	*/
+	
 	defer wg.Done()
 	// Http Get request to get the data from webpage and err code 
 	data, err := http.Get(website)
+
 	re_simplify := regexp.MustCompile(`https://simplify\.jobs`)
 	re_http := regexp.MustCompile(`^https`)
+	re_clean_company := regexp.MustCompile(`[^\x00-\x7F]+`)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,6 +49,8 @@ func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string, comp
 
 	data.Body.Close()
 
+	var company_flag bool = len(company_set) != 0
+
 	var rows uint = 1
 	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
 		var rowdata string
@@ -55,10 +61,11 @@ func scrape(website string, wg *sync.WaitGroup, limit uint, flags []string, comp
 			// j == 3 -> Application button ( Look for a tags)
 			// j == 4 -> date posted
 			if j == 0 {
-				for _,v := range(company) {
-					if strings.Contains(strings.ToLower(td.Text()), v) {
-						rowdata = rowdata + strings.TrimSpace(td.Text()) + " | "
-					}
+				company_text := strings.ToLower(strings.TrimSpace(re_clean_company.ReplaceAllString(td.Text(), "")))
+				if _,v := company_set[company_text]; company_flag && v{
+					rowdata = rowdata + strings.Title(company_text) + " | "
+				} else if !company_flag {
+					rowdata = rowdata + strings.Title(company_text) + " | "
 				}
 			}
 			if j == 1 {
@@ -144,11 +151,16 @@ func main() {
 	flag_s := strings.Split(*flags, ",")
 	company_s := strings.Split(*company, ",")
 
-	for i,v := range(flag_s) {
-		flag_s[i] = strings.ToLower(v)
+	flag_set := make(map[string]struct{})
+	company_set := make(map[string]struct{})
+	for _,v := range(flag_s) {
+		flag_set[strings.ToLower(v)] = struct{}{}
 	}
-	for i,v := range(company_s) {
-		company_s[i] = strings.ToLower(v)
+
+	if company_s[0] != "" {
+		for _,v := range(company_s) { 
+			company_set[strings.ToLower(v)] = struct{}{}
+		}
 	}
 
 	// Websites to scrape jobs from
@@ -158,15 +170,15 @@ func main() {
 
 	if *intern {
 		wg.Add(1)
-		go scrape(websites[0], &wg, *limit, flag_s, company_s)
+		go scrape(websites[0], &wg, *limit, flag_set, company_set)
 	} else if *fulltime {
 		wg.Add(1)
-		go scrape(websites[1], &wg, *limit, flag_s, company_s)
+		go scrape(websites[1], &wg, *limit, flag_set, company_set)
 	} else {
 		wg.Add(1)
-		go scrape(websites[0], &wg, *limit, flag_s, company_s)
+		go scrape(websites[0], &wg, *limit, flag_set, company_set)
 		wg.Add(1)
-		go scrape(websites[1], &wg, *limit, flag_s, company_s)
+		go scrape(websites[1], &wg, *limit, flag_set, company_set)
 	}
 
 	wg.Wait()
