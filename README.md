@@ -1,7 +1,7 @@
 
 # Concurjob
 
-CLI App to browse, filter, and apply for jobs and internships straight from your cmdline
+CLI App to browse, filter, and apply for tech related jobs and internships straight from your cmdline
 
 Made faster using goroutines and concurrency
 
@@ -33,6 +33,6 @@ Made faster using goroutines and concurrency
 
 [] Expanding beyond SWE and tech positions
 
-[] Distributing and organizing main.go
+[X] Distributing and organizing main.go
 
-[] Utilizing hashing O(1) lookup instead of slice iteration for -flags
+[X] Utilizing hashing O(1) lookup instead of slice iteration for -company
