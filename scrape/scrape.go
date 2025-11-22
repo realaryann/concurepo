@@ -47,6 +47,7 @@ func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_s
 	data.Body.Close()
 
 	var company_flag bool = len(company_set) != 0
+	var role_flag bool = len(flag_set) != 0
 
 	var rows uint = 1
 	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
@@ -59,14 +60,15 @@ func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_s
 			// j == 4 -> date posted
 			if j == 0 {
 				company_text := strings.ToLower(strings.TrimSpace(re_clean_company.ReplaceAllString(td.Text(), "")))
-				if _,v := company_set[company_text]; company_flag && v{
+				if _,v := company_set[company_text]; (company_flag && v) || !company_flag {
 					rowdata = rowdata + strings.Title(company_text) + " | "
-				} else if !company_flag {
-					rowdata = rowdata + strings.Title(company_text) + " | "
-				}
+				} 
 			}
 			if j == 1 {
-				rowdata = rowdata + strings.TrimSpace(td.Text()) + " | " 
+				role_text := strings.ToLower(strings.TrimSpace(re_clean_company.ReplaceAllString(td.Text(), "")))
+				if _,v := flag_set[role_text]; (role_flag && v) || !role_flag {
+					rowdata = rowdata + strings.Title(role_text) + " | "
+				}
 			} else if j == 3 {
 				td.Find("a").Each(func(k int, a *goquery.Selection) {
 					link, exists := a.Attr("href")

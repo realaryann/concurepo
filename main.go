@@ -44,8 +44,10 @@ func main() {
 
 	flag_set := make(map[string]struct{})
 	company_set := make(map[string]struct{})
-	for _,v := range(flag_s) {
-		flag_set[strings.ToLower(v)] = struct{}{}
+	if flag_s[0] != "" {
+		for _,v := range(flag_s) {
+			flag_set[strings.ToLower(v)] = struct{}{}
+		}
 	}
 
 	if company_s[0] != "" {
