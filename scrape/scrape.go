@@ -76,9 +76,12 @@ func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_s
 						rowdata = rowdata + "Link: " + link + " | "
 					} 
 				})
+			} else if j == 4 {
+				scraped_date := strings.ToLower(strings.TrimSpace(td.Text()))
+				rowdata = rowdata + "Time: " + scraped_date + " | "
 			}
 		})
-		if strings.Count(rowdata,"|") == 3 && (rows <= limit) {
+		if strings.Count(rowdata,"|") == 4 && (rows <= limit) {
 			fmt.Printf("%d: %s\n\n\n", rows, rowdata)
 			rows++
 		} else {
