@@ -9,10 +9,11 @@ import (
 	"regexp"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/google/go-github/v76/github"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"strings"
 )
 
-func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_set map[string]struct{}) {
+func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_set map[string]struct{}, tab table.Writer) {
 	/*
 	Scrape all the HTML data from a website, filter it, and print the desired output.
 	website: target website
@@ -51,7 +52,7 @@ func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_s
 
 	var rows uint = 1
 	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
-		var rowdata string
+		var rowdata []string
 		tr.Find("td").Each(func(j int, td *goquery.Selection) {
 			// j == 0 -> company name
 			// j == 1 -> role name
@@ -61,34 +62,42 @@ func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_s
 			if j == 0 {
 				company_text := strings.ToLower(strings.TrimSpace(re_clean_company.ReplaceAllString(td.Text(), "")))
 				if _,v := company_set[company_text]; (company_flag && v) || !company_flag {
-					rowdata = rowdata + strings.Title(company_text) + " | "
+					rowdata = append(rowdata, company_text)
 				} 
 			}
 			if j == 1 {
 				role_text := strings.ToLower(strings.TrimSpace(re_clean_company.ReplaceAllString(td.Text(), "")))
 				if _,v := flag_set[role_text]; (role_flag && v) || !role_flag {
-					rowdata = rowdata + strings.Title(role_text) + " | "
+					rowdata = append(rowdata, role_text)
 				}
 			} else if j == 3 {
 				td.Find("a").Each(func(k int, a *goquery.Selection) {
 					link, exists := a.Attr("href")
 					if exists && !re_simplify.MatchString(link) && re_http.MatchString(link) {
-						rowdata = rowdata + "Link: " + link + " | "
+						rowdata = append(rowdata, link)
 					} 
 				})
 			} else if j == 4 {
 				scraped_date := strings.ToLower(strings.TrimSpace(td.Text()))
-				rowdata = rowdata + "Time: " + scraped_date + " | "
+				rowdata = append(rowdata, scraped_date)
 			}
 		})
-		if strings.Count(rowdata,"|") == 4 && (rows <= limit) {
-			fmt.Printf("%d: %s\n\n\n", rows, rowdata)
+		if (len(rowdata) == 4) && (rows <= limit) {
+			tab.AppendRow(slice_to_row(rowdata))
 			rows++
 		} else {
 			return
 		}
 	})
 
+}
+
+func slice_to_row(strlist []string) table.Row {
+	row := make(table.Row, len(strlist))
+	for i,v := range(strlist) {
+		row[i] = v 
+	}
+	return row
 }
 
 func github_go_api(flags []string, wg *sync.WaitGroup) {

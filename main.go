@@ -7,6 +7,7 @@ import (
 	"concurjob/parse_args"
 	"concurjob/version"
 	"concurjob/scrape"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"strings"
 )
 
@@ -56,6 +57,16 @@ func main() {
 		}
 	}
 
+	tab := table.NewWriter()
+	tab.SetOutputMirror(os.Stdout)
+	tab.SetColumnConfigs([]table.ColumnConfig{
+        {
+            Name:     "Link", 
+            WidthMax: 80,            
+        },
+    })
+	tab.AppendHeader(table.Row{"Company", "Role", "Link","Date"})
+
 	// Websites to scrape jobs from
 	websites := []string{"https://github.com/SimplifyJobs/Summer2026-Internships", "https://github.com/SimplifyJobs/New-Grad-Positions"}
 	// Waitgroup to wait for all scraping goroutines
@@ -63,17 +74,19 @@ func main() {
 
 	if *intern {
 		wg.Add(1)
-		go scrape.Scraper(websites[0], &wg, *limit, flag_set, company_set)
+		go scrape.Scraper(websites[0], &wg, *limit, flag_set, company_set, tab)
 	} else if *fulltime {
 		wg.Add(1)
-		go scrape.Scraper(websites[1], &wg, *limit, flag_set, company_set)
+		go scrape.Scraper(websites[1], &wg, *limit, flag_set, company_set, tab)
 	} else {
 		wg.Add(1)
-		go scrape.Scraper(websites[0], &wg, *limit, flag_set, company_set)
+		go scrape.Scraper(websites[0], &wg, *limit, flag_set, company_set, tab)
 		wg.Add(1)
-		go scrape.Scraper(websites[1], &wg, *limit, flag_set, company_set)
+		go scrape.Scraper(websites[1], &wg, *limit, flag_set, company_set, tab)
 	}
 
 	wg.Wait()
+
+	tab.Render()
 
 }
