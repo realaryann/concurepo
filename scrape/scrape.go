@@ -13,6 +13,12 @@ import (
 	"strings"
 )
 
+func Hyperlink(url string) string {
+	osc := "\033]8;;"
+	st := "\033\\"
+	return fmt.Sprintf("%s%s%s%s%s%s", osc, url, st, "link", osc, st)
+}
+
 func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_set map[string]struct{}, tab table.Writer) {
 	/*
 	Scrape all the HTML data from a website, filter it, and print the desired output.
@@ -74,7 +80,7 @@ func Scraper(website string, wg *sync.WaitGroup, limit uint, flag_set, company_s
 				td.Find("a").Each(func(k int, a *goquery.Selection) {
 					link, exists := a.Attr("href")
 					if exists && !re_simplify.MatchString(link) && re_http.MatchString(link) {
-						rowdata = append(rowdata, link)
+						rowdata = append(rowdata, Hyperlink(link))
 					} 
 				})
 			} else if j == 4 {
